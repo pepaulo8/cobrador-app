@@ -655,29 +655,62 @@ function parseWhatsApp() {
 }
 
 function parseWhatsAppText(text) {
+  // Remove asteriscos de formatação do WhatsApp (*negrito*)
+  text = text.replace(/\*/g, '');
+
   const lines = text.split('\n').map(l => l.trim()).filter(l => l);
   const data = {};
+
+  // Normaliza removendo acentos para comparação
+  function normalize(str) {
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[:\-]/g, '').trim();
+  }
+
+  // Mapa de palavras-chave -> campo (já normalizadas, sem acento)
   const fieldMap = {
-    'emissão': 'emissao', 'emissao': 'emissao',
+    'emissao': 'emissao',
     'nome': 'nome',
-    'residência': 'endereco', 'residencia': 'endereco', 'endereço': 'endereco', 'endereco': 'endereco',
-    'barrio': 'bairro', 'bairro': 'bairro',
-    'tel': 'telefone', 'telefone': 'telefone', 'fone': 'telefone',
+    'residencia': 'endereco', 'endereco': 'endereco', 'end entrega': 'endereco',
+    'bairro': 'bairro', 'barrio': 'bairro', 'bairo': 'bairro', 'barro': 'bairro',
+    'tel': 'telefone', 'telefone': 'telefone', 'fone': 'telefone', 'celular': 'telefone',
     'mercadoria': 'mercadoria', 'produto': 'mercadoria', 'mercadorias': 'mercadoria',
-    'parcelas': 'parcelas',
-    'vencimento': 'vencimento',
-    'observação': 'observacao', 'observacao': 'observacao', 'obs': 'observacao',
+    'parcelas': 'parcelas', 'parcela': 'parcelas',
+    'vencimento': 'vencimento', 'venc': 'vencimento',
+    'observacao': 'observacao', 'obs': 'observacao',
     'vendedor': 'vendedor', 'vend': 'vendedor'
   };
+
+  // Busca fuzzy: tenta match exato primeiro, depois verifica se a linha começa com ou contém alguma chave
+  function findField(normalized) {
+    // Match exato
+    if (fieldMap[normalized]) return fieldMap[normalized];
+
+    // Tenta match parcial (a linha é uma das chaves ou contém)
+    for (const key of Object.keys(fieldMap)) {
+      if (normalized === key) return fieldMap[key];
+      // Se a linha normalizada tem no máximo 15 chars e é parecida com a chave
+      if (normalized.length <= 15) {
+        // Verifica se começa igual (ex: "bairr" match "bairro")
+        if (key.length >= 3 && normalized.startsWith(key.substring(0, 3)) && Math.abs(normalized.length - key.length) <= 2) {
+          return fieldMap[key];
+        }
+        // Verifica se a chave começa com a linha (ex: "tel" match "telefone")
+        if (normalized.length >= 3 && key.startsWith(normalized.substring(0, 3)) && normalized.length <= key.length) {
+          return fieldMap[key];
+        }
+      }
+    }
+    return null;
+  }
 
   let currentField = null;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    const lower = line.toLowerCase().replace(/[:\-]/g, '').trim();
+    const normalized = normalize(line);
 
-    if (lower === 'encaminhada') continue;
+    if (normalized === 'encaminhada' || normalized === '') continue;
 
-    const matchedField = fieldMap[lower];
+    const matchedField = findField(normalized);
     if (matchedField) {
       currentField = matchedField;
       continue;
