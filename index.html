@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Cobrador App</title>
+<style>
+:root {
+  --primary: #1a73e8;
+  --primary-dark: #1557b0;
+  --danger: #d32f2f;
+  --success: #2e7d32;
+  --warning: #f57c00;
+  --bg: #f5f5f5;
+  --card-bg: #fff;
+  --text: #212121;
+  --text-light: #757575;
+  --border: #e0e0e0;
+  --pink-card: #f8bbd0;
+  --pink-card-dark: #f48fb1;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+/* Header */
+.header {
+  background: var(--primary);
+  color: #fff;
+  padding: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.header h1 { font-size: 18px; font-weight: 600; }
+.header-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Bottom Navigation */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  display: flex;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+  z-index: 100;
+}
+.nav-item {
+  flex: 1;
+  padding: 10px 0;
+  text-align: center;
+  border: none;
+  background: none;
+  color: var(--text-light);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: color 0.2s;
+}
+.nav-item.active { color: var(--primary); }
+.nav-item svg { width: 24px; height: 24px; }
+
+/* Pages */
+.page { display: none; padding: 16px; }
+.page.active { display: block; }
+
+/* Search */
+.search-bar {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 16px;
+  background: #fff;
+  margin-bottom: 12px;
+}
+.search-bar:focus { outline: none; border-color: var(--primary); }
+
+/* Filter chips */
+.filter-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+.chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  color: var(--text);
+}
+.chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* Client Cards */
+.client-list { display: flex; flex-direction: column; gap: 10px; }
+.client-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  cursor: pointer;
+  border-left: 4px solid var(--primary);
+  transition: transform 0.1s;
+}
+.client-card:active { transform: scale(0.98); }
+.client-card.atrasado { border-left-color: var(--danger); }
+.client-card.quitado { border-left-color: var(--success); }
+.client-card .name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+.client-card .info { font-size: 13px; color: var(--text-light); }
+.client-card .info-row { display: flex; justify-content: space-between; margin-top: 6px; }
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+}
+.badge-atrasado { background: var(--danger); }
+.badge-em-dia { background: var(--success); }
+.badge-quitado { background: var(--text-light); }
+
+/* Forms */
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.form-group input, .form-group textarea, .form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 16px;
+  background: #fff;
+}
+.form-group textarea { resize: vertical; min-height: 100px; font-family: inherit; }
+.form-group input:focus, .form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.btn:active { opacity: 0.8; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-outline {
+  background: #fff;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+}
+.btn + .btn { margin-top: 10px; }
+
+/* Paste area */
+.paste-area {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  background: #fafafa;
+  margin-bottom: 16px;
+}
+.paste-area textarea {
+  width: 100%;
+  min-height: 180px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  resize: vertical;
+  font-family: inherit;
+}
+.paste-area textarea:focus { outline: none; }
+.paste-area p { color: var(--text-light); font-size: 14px; margin-bottom: 10px; }
+
+/* Client detail */
+.detail-header {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.detail-header .name { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 14px;
+}
+.detail-row .label { color: var(--text-light); }
+.detail-row .value { font-weight: 500; text-align: right; max-width: 60%; }
+
+.parcelas-table {
+  width: 100%;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  margin-bottom: 12px;
+}
+.parcelas-table table { width: 100%; border-collapse: collapse; }
+.parcelas-table th {
+  background: var(--primary);
+  color: #fff;
+  padding: 10px 8px;
+  font-size: 12px;
+  text-align: center;
+}
+.parcelas-table td {
+  padding: 10px 8px;
+  font-size: 13px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.parcelas-table tr.pago { background: #e8f5e9; }
+.parcelas-table tr.atrasado { background: #ffebee; }
+.parcelas-table .btn-pagar {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--success);
+  color: #fff;
+}
+.parcelas-table .btn-desfazer {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  background: var(--border);
+  color: var(--text);
+}
+
+/* Preview parsed data */
+.preview-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.preview-card h3 {
+  font-size: 14px;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+.preview-field {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+}
+.preview-field:last-child { border: none; }
+.preview-field .pf-label { color: var(--text-light); }
+.preview-field .pf-value { font-weight: 500; text-align: right; max-width: 65%; word-break: break-word; }
+
+/* Actions row */
+.actions-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.actions-row .btn { flex: 1; padding: 12px 8px; font-size: 13px; }
+
+/* Stats */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.stat-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.stat-card .number { font-size: 28px; font-weight: 700; }
+.stat-card .label { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+.stat-card.danger .number { color: var(--danger); }
+.stat-card.success .number { color: var(--success); }
+.stat-card.warning .number { color: var(--warning); }
+
+/* Print styles */
+@media print {
+  body { background: #fff !important; padding: 0; margin: 0; }
+  .header, .bottom-nav, .no-print { display: none !important; }
+  .page { display: none !important; }
+  .print-area { display: block !important; }
+
+  .print-card {
+    width: 180mm;
+    border: 2px solid #000;
+    padding: 5mm;
+    font-size: 9pt;
+    page-break-after: always;
+    page-break-inside: avoid;
+    background: #fff;
+    font-family: Arial, sans-serif;
+    margin: 0 auto;
+  }
+  .print-card .card-title {
+    text-align: center;
+    font-weight: bold;
+    font-size: 12pt;
+    border-bottom: 2px solid #000;
+    padding-bottom: 2mm;
+    margin-bottom: 3mm;
+  }
+  .print-card .card-via {
+    text-align: right;
+    font-size: 8pt;
+    color: #666;
+    margin-bottom: 1mm;
+  }
+  /* Front card - table-based layout */
+  .print-front-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 3mm;
+  }
+  .print-front-table td {
+    padding: 1.5mm 2mm;
+    font-size: 9pt;
+    border-bottom: 1px solid #ccc;
+    vertical-align: top;
+  }
+  .print-front-table .fl {
+    font-weight: bold;
+    white-space: nowrap;
+    width: 28mm;
+    font-size: 8pt;
+    color: #333;
+  }
+  .print-front-table .fv {
+    font-size: 9pt;
+  }
+  .print-front-table .fr {
+    font-weight: bold;
+    white-space: nowrap;
+    width: 22mm;
+    font-size: 8pt;
+    color: #333;
+    padding-left: 5mm;
+  }
+  /* Product table */
+  .print-prod-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2mm 0;
+  }
+  .print-prod-table th {
+    background: #ddd;
+    border: 1px solid #999;
+    padding: 1.5mm 2mm;
+    font-size: 8pt;
+    text-align: center;
+  }
+  .print-prod-table td {
+    border: 1px solid #999;
+    padding: 2mm;
+    font-size: 9pt;
+  }
+  /* Footer row */
+  .print-footer-row {
+    display: flex;
+    justify-content: space-between;
+    border-top: 2px solid #000;
+    padding-top: 2mm;
+    margin-top: 2mm;
+    font-size: 10pt;
+    font-weight: bold;
+  }
+  /* Parcelas table */
+  .print-parc-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .print-parc-table th {
+    background: #ddd;
+    border: 1px solid #000;
+    padding: 1.5mm 2mm;
+    font-size: 8pt;
+    text-align: center;
+    font-weight: bold;
+  }
+  .print-parc-table td {
+    border: 1px solid #000;
+    padding: 1.8mm 2mm;
+    font-size: 8.5pt;
+    text-align: center;
+  }
+  .print-parc-table tr:nth-child(even) { background: #f9f9f9; }
+  .print-obs {
+    margin-top: 2mm;
+    font-size: 8pt;
+    color: #333;
+  }
+}
+.print-area { display: none; }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-light);
+}
+.empty-state svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.3; }
+.empty-state p { font-size: 15px; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 150;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  padding: 20px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal h2 { font-size: 18px; margin-bottom: 16px; }
+.modal .close-modal {
+  float: right;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-light);
+}
+
+/* Back button */
+.back-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-right: 8px;
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header" id="mainHeader">
+  <div style="display:flex;align-items:center;">
+    <button class="back-btn" id="backBtn" style="display:none;" onclick="goBack()">&#8592;</button>
+    <h1 id="headerTitle">Cobrador App</h1>
+  </div>
+  <button class="header-btn" id="headerAction" onclick="exportData()">Backup</button>
+</div>
+
+<!-- Page: Dashboard -->
+<div class="page active" id="pageDashboard">
+  <div class="stats-grid" id="statsGrid"></div>
+  <input type="text" class="search-bar" placeholder="Buscar cliente, bairro, vendedor..." id="searchInput" oninput="filterClients()">
+  <div class="filter-chips" id="filterChips">
+    <button class="chip active" onclick="setFilter('todos')">Todos</button>
+    <button class="chip" onclick="setFilter('atrasado')">Atrasados</button>
+    <button class="chip" onclick="setFilter('em_dia')">Em dia</button>
+    <button class="chip" onclick="setFilter('quitado')">Quitados</button>
+  </div>
+  <div class="client-list" id="clientList"></div>
+</div>
+
+<!-- Page: Nova Venda -->
+<div class="page" id="pageNova">
+  <h2 style="margin-bottom:16px;">Nova Venda</h2>
+  <div class="paste-area">
+    <p>Cole aqui o texto da ficha do WhatsApp:</p>
+    <textarea id="whatsappText" placeholder="Emissão&#10;12/03/26&#10;Nome&#10;Maria Eduarda..."></textarea>
+  </div>
+  <button class="btn btn-primary" onclick="parseWhatsApp()">Processar Ficha</button>
+
+  <div id="previewArea" style="display:none; margin-top:20px;">
+    <div class="preview-card">
+      <h3>Dados Extraidos</h3>
+      <div id="previewFields"></div>
+    </div>
+    <div class="preview-card">
+      <h3>Parcelas</h3>
+      <div id="previewParcelas"></div>
+    </div>
+    <button class="btn btn-success" onclick="salvarVenda()">Salvar Venda</button>
+  </div>
+</div>
+
+<!-- Page: Detalhe Cliente -->
+<div class="page" id="pageDetalhe">
+  <div id="detalheContent"></div>
+</div>
+
+<!-- Page: Relatorios -->
+<div class="page" id="pageRelatorios">
+  <h2 style="margin-bottom:16px;">Cobranças da Semana</h2>
+  <div id="cobrancasSemana"></div>
+  <h2 style="margin-top:24px;margin-bottom:16px;">Resumo por Vendedor</h2>
+  <div id="resumoVendedor"></div>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <button class="nav-item active" onclick="showPage('pageDashboard')" id="navDash">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Clientes
+  </button>
+  <button class="nav-item" onclick="showPage('pageNova')" id="navNova">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    Nova Venda
+  </button>
+  <button class="nav-item" onclick="showPage('pageRelatorios')" id="navRel">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Relatórios
+  </button>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Print area -->
+<div class="print-area" id="printArea"></div>
+
+<!-- Modal for editing -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+// ============ DATA LAYER ============
+const STORAGE_KEY = 'cobrador_vendas';
+
+function getVendas() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch { return []; }
+}
+
+function saveVendas(vendas) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(vendas));
+}
+
+function getVendaById(id) {
+  return getVendas().find(v => v.id === id);
+}
+
+function updateVenda(id, updates) {
+  const vendas = getVendas();
+  const idx = vendas.findIndex(v => v.id === id);
+  if (idx >= 0) {
+    vendas[idx] = { ...vendas[idx], ...updates };
+    saveVendas(vendas);
+  }
+}
+
+function deleteVenda(id) {
+  if (!confirm('Tem certeza que deseja excluir esta venda?')) return;
+  const vendas = getVendas().filter(v => v.id !== id);
+  saveVendas(vendas);
+  showPage('pageDashboard');
+  showToast('Venda excluída');
+}
+
+// ============ WHATSAPP PARSER ============
+function parseWhatsApp() {
+  const raw = document.getElementById('whatsappText').value.trim();
+  if (!raw) { showToast('Cole o texto da ficha primeiro'); return; }
+
+  const data = parseWhatsAppText(raw);
+  if (!data.nome) { showToast('Não consegui extrair os dados. Verifique o texto.'); return; }
+
+  window._parsedData = data;
+  showPreview(data);
+}
+
+function parseWhatsAppText(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  const data = {};
+  const fieldMap = {
+    'emissão': 'emissao', 'emissao': 'emissao',
+    'nome': 'nome',
+    'residência': 'endereco', 'residencia': 'endereco', 'endereço': 'endereco', 'endereco': 'endereco',
+    'barrio': 'bairro', 'bairro': 'bairro',
+    'tel': 'telefone', 'telefone': 'telefone', 'fone': 'telefone',
+    'mercadoria': 'mercadoria', 'produto': 'mercadoria', 'mercadorias': 'mercadoria',
+    'parcelas': 'parcelas',
+    'vencimento': 'vencimento',
+    'observação': 'observacao', 'observacao': 'observacao', 'obs': 'observacao',
+    'vendedor': 'vendedor', 'vend': 'vendedor'
+  };
+
+  let currentField = null;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const lower = line.toLowerCase().replace(/[:\-]/g, '').trim();
+
+    if (lower === 'encaminhada') continue;
+
+    const matchedField = fieldMap[lower];
+    if (matchedField) {
+      currentField = matchedField;
+      continue;
+    }
+
+    if (currentField && !data[currentField]) {
+      data[currentField] = line;
+      currentField = null;
+    }
+  }
+
+  // Parse parcelas "12x175" => { qtd: 12, valor: 175 }
+  if (data.parcelas) {
+    const match = data.parcelas.match(/(\d+)\s*[xX]\s*([\d.,]+)/);
+    if (match) {
+      data.qtdParcelas = parseInt(match[1]);
+      data.valorParcela = parseFloat(match[2].replace(',', '.'));
+      data.totalVenda = data.qtdParcelas * data.valorParcela;
+    }
+  }
+
+  // Parse vencimento to generate dates
+  if (data.vencimento && data.qtdParcelas) {
+    data.datasParcelas = gerarDatasParcelas(data.vencimento, data.qtdParcelas);
+  }
+
+  return data;
+}
+
+function gerarDatasParcelas(vencimentoStr, qtd) {
+  const parts = vencimentoStr.replace(/\//g, '-').split('-');
+  let day, month, year;
+
+  if (parts.length === 3) {
+    day = parseInt(parts[0]);
+    month = parseInt(parts[1]) - 1;
+    year = parseInt(parts[2]);
+    if (year < 100) year += 2000;
+  } else {
+    return [];
+  }
+
+  const datas = [];
+  for (let i = 0; i < qtd; i++) {
+    const d = new Date(year, month + i, day);
+    datas.push(formatDate(d));
+  }
+  return datas;
+}
+
+function formatDate(d) {
+  return String(d.getDate()).padStart(2, '0') + '/' +
+         String(d.getMonth() + 1).padStart(2, '0') + '/' +
+         d.getFullYear();
+}
+
+function parseDate(str) {
+  if (!str) return null;
+  const p = str.split('/');
+  if (p.length !== 3) return null;
+  return new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]));
+}
+
+// ============ PREVIEW ============
+function showPreview(data) {
+  const area = document.getElementById('previewArea');
+  const fields = document.getElementById('previewFields');
+  const parcelas = document.getElementById('previewParcelas');
+
+  const fieldList = [
+    ['Emissão', data.emissao],
+    ['Nome', data.nome],
+    ['Endereço', data.endereco],
+    ['Bairro', data.bairro],
+    ['Telefone', data.telefone],
+    ['Mercadoria', data.mercadoria],
+    ['Parcelas', data.parcelas],
+    ['Vencimento', data.vencimento],
+    ['Observação', data.observacao],
+    ['Vendedor', data.vendedor],
+    ['Total', data.totalVenda ? 'R$ ' + data.totalVenda.toFixed(2).replace('.', ',') : '-'],
+  ];
+
+  fields.innerHTML = fieldList.map(([l, v]) =>
+    `<div class="preview-field"><span class="pf-label">${l}</span><span class="pf-value">${v || '-'}</span></div>`
+  ).join('');
+
+  if (data.datasParcelas) {
+    let total = data.totalVenda;
+    parcelas.innerHTML = '<table style="width:100%;font-size:13px;border-collapse:collapse;">' +
+      '<tr style="background:#f0f0f0;"><th style="padding:6px;">Nº</th><th>Vencimento</th><th>Valor</th><th>Resto</th></tr>' +
+      data.datasParcelas.map((d, i) => {
+        total -= data.valorParcela;
+        return `<tr><td style="padding:6px;text-align:center;">${i + 1}º</td><td style="text-align:center;">${d}</td><td style="text-align:center;">R$ ${data.valorParcela.toFixed(2).replace('.', ',')}</td><td style="text-align:center;">R$ ${Math.max(0, total).toFixed(2).replace('.', ',')}</td></tr>`;
+      }).join('') + '</table>';
+  }
+
+  area.style.display = 'block';
+  area.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ============ SAVE ============
+function salvarVenda() {
+  const data = window._parsedData;
+  if (!data) return;
+
+  const venda = {
+    id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+    criadoEm: new Date().toISOString(),
+    emissao: data.emissao || '',
+    nome: data.nome || '',
+    endereco: data.endereco || '',
+    bairro: data.bairro || '',
+    telefone: data.telefone || '',
+    mercadoria: data.mercadoria || '',
+    parcelasStr: data.parcelas || '',
+    qtdParcelas: data.qtdParcelas || 0,
+    valorParcela: data.valorParcela || 0,
+    totalVenda: data.totalVenda || 0,
+    vencimento: data.vencimento || '',
+    observacao: data.observacao || '',
+    vendedor: data.vendedor || '',
+    parcelas: (data.datasParcelas || []).map((d, i) => ({
+      num: i + 1,
+      vencimento: d,
+      pago: false,
+      dataPagamento: null,
+    })),
+  };
+
+  const vendas = getVendas();
+  vendas.push(venda);
+  saveVendas(vendas);
+
+  window._parsedData = null;
+  document.getElementById('whatsappText').value = '';
+  document.getElementById('previewArea').style.display = 'none';
+
+  showToast('Venda salva com sucesso!');
+  showPage('pageDashboard');
+}
+
+// ============ NAVIGATION ============
+let currentPage = 'pageDashboard';
+let currentClientId = null;
+let currentFilter = 'todos';
+
+function showPage(pageId, clientId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (pageId === 'pageDashboard') document.getElementById('navDash').classList.add('active');
+  if (pageId === 'pageNova') document.getElementById('navNova').classList.add('active');
+  if (pageId === 'pageRelatorios') document.getElementById('navRel').classList.add('active');
+
+  const backBtn = document.getElementById('backBtn');
+  const title = document.getElementById('headerTitle');
+
+  if (pageId === 'pageDetalhe') {
+    backBtn.style.display = 'inline-block';
+    title.textContent = 'Detalhe';
+    currentClientId = clientId;
+    renderDetalhe(clientId);
+  } else {
+    backBtn.style.display = 'none';
+    if (pageId === 'pageDashboard') { title.textContent = 'Cobrador App'; renderDashboard(); }
+    if (pageId === 'pageNova') title.textContent = 'Nova Venda';
+    if (pageId === 'pageRelatorios') { title.textContent = 'Relatórios'; renderRelatorios(); }
+  }
+
+  currentPage = pageId;
+  window.scrollTo(0, 0);
+}
+
+function goBack() {
+  showPage('pageDashboard');
+}
+
+// ============ DASHBOARD ============
+function renderDashboard() {
+  renderStats();
+  filterClients();
+}
+
+function renderStats() {
+  const vendas = getVendas();
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  let totalClientes = vendas.length;
+  let atrasados = 0;
+  let emDia = 0;
+  let quitados = 0;
+
+  vendas.forEach(v => {
+    const status = getVendaStatus(v);
+    if (status === 'quitado') quitados++;
+    else if (status === 'atrasado') atrasados++;
+    else emDia++;
+  });
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="number">${totalClientes}</div><div class="label">Total Clientes</div></div>
+    <div class="stat-card danger"><div class="number">${atrasados}</div><div class="label">Atrasados</div></div>
+    <div class="stat-card success"><div class="number">${emDia}</div><div class="label">Em Dia</div></div>
+    <div class="stat-card"><div class="number">${quitados}</div><div class="label">Quitados</div></div>
+  `;
+}
+
+function getVendaStatus(venda) {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const todasPagas = venda.parcelas.every(p => p.pago);
+  if (todasPagas) return 'quitado';
+
+  const temAtrasada = venda.parcelas.some(p => {
+    if (p.pago) return false;
+    const venc = parseDate(p.vencimento);
+    return venc && venc < hoje;
+  });
+
+  return temAtrasada ? 'atrasado' : 'em_dia';
+}
+
+function getProximaParcela(venda) {
+  return venda.parcelas.find(p => !p.pago);
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  filterClients();
+}
+
+function filterClients() {
+  const search = (document.getElementById('searchInput').value || '').toLowerCase();
+  let vendas = getVendas();
+
+  if (currentFilter !== 'todos') {
+    vendas = vendas.filter(v => getVendaStatus(v) === currentFilter);
+  }
+
+  if (search) {
+    vendas = vendas.filter(v =>
+      (v.nome || '').toLowerCase().includes(search) ||
+      (v.bairro || '').toLowerCase().includes(search) ||
+      (v.vendedor || '').toLowerCase().includes(search) ||
+      (v.mercadoria || '').toLowerCase().includes(search)
+    );
+  }
+
+  // Sort: atrasados first, then by next due date
+  vendas.sort((a, b) => {
+    const sa = getVendaStatus(a) === 'atrasado' ? 0 : 1;
+    const sb = getVendaStatus(b) === 'atrasado' ? 0 : 1;
+    if (sa !== sb) return sa - sb;
+    const pa = getProximaParcela(a);
+    const pb = getProximaParcela(b);
+    const da = pa ? parseDate(pa.vencimento) : new Date(9999, 0);
+    const db = pb ? parseDate(pb.vencimento) : new Date(9999, 0);
+    return da - db;
+  });
+
+  const list = document.getElementById('clientList');
+
+  if (vendas.length === 0) {
+    list.innerHTML = `<div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <p>Nenhum cliente encontrado</p>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = vendas.map(v => {
+    const status = getVendaStatus(v);
+    const prox = getProximaParcela(v);
+    const parcPagas = v.parcelas.filter(p => p.pago).length;
+    const badgeClass = status === 'atrasado' ? 'badge-atrasado' : status === 'quitado' ? 'badge-quitado' : 'badge-em-dia';
+    const badgeText = status === 'atrasado' ? 'Atrasado' : status === 'quitado' ? 'Quitado' : 'Em dia';
+
+    return `<div class="client-card ${status}" onclick="showPage('pageDetalhe','${v.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div class="name">${v.nome}</div>
+        <span class="badge ${badgeClass}">${badgeText}</span>
+      </div>
+      <div class="info">${v.mercadoria} - ${v.bairro || ''}</div>
+      <div class="info-row">
+        <span>${parcPagas}/${v.qtdParcelas} parcelas pagas</span>
+        <span>${prox ? 'Próx: ' + prox.vencimento : 'Quitado'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============ DETALHE ============
+function renderDetalhe(id) {
+  const v = getVendaById(id);
+  if (!v) { showPage('pageDashboard'); return; }
+
+  const status = getVendaStatus(v);
+  const saldoRestante = v.parcelas.filter(p => !p.pago).length * v.valorParcela;
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const meses = ['', 'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+
+  let html = `
+    <div class="detail-header">
+      <div class="name">${v.nome}</div>
+      <div class="detail-row"><span class="label">Endereço</span><span class="value">${v.endereco || '-'}</span></div>
+      <div class="detail-row"><span class="label">Bairro</span><span class="value">${v.bairro || '-'}</span></div>
+      <div class="detail-row"><span class="label">Telefone</span><span class="value"><a href="tel:${(v.telefone||'').replace(/\D/g,'')}">${v.telefone || '-'}</a></span></div>
+      <div class="detail-row"><span class="label">Mercadoria</span><span class="value">${v.mercadoria || '-'}</span></div>
+      <div class="detail-row"><span class="label">Condição</span><span class="value">${v.parcelasStr}</span></div>
+      <div class="detail-row"><span class="label">Total</span><span class="value">R$ ${(v.totalVenda||0).toFixed(2).replace('.',',')}</span></div>
+      <div class="detail-row"><span class="label">Saldo Restante</span><span class="value" style="color:${saldoRestante > 0 ? 'var(--danger)' : 'var(--success)'}">R$ ${saldoRestante.toFixed(2).replace('.',',')}</span></div>
+      <div class="detail-row"><span class="label">Vendedor</span><span class="value">${v.vendedor || '-'}</span></div>
+      <div class="detail-row"><span class="label">Emissão</span><span class="value">${v.emissao || '-'}</span></div>
+      ${v.observacao ? `<div class="detail-row"><span class="label">Obs</span><span class="value">${v.observacao}</span></div>` : ''}
+    </div>
+
+    <div class="actions-row no-print">
+      <button class="btn btn-outline" onclick="imprimirCartao('${v.id}')">Imprimir Cartão</button>
+      <button class="btn btn-outline" style="color:var(--success);border-color:var(--success);" onclick="ligarCliente('${v.telefone}')">Ligar</button>
+    </div>
+
+    <div class="parcelas-table">
+      <table>
+        <thead>
+          <tr><th>Mês</th><th>Nº</th><th>Vencimento</th><th>Valor</th><th>Resto</th><th>Ação</th></tr>
+        </thead>
+        <tbody>
+  `;
+
+  let restante = v.totalVenda;
+  v.parcelas.forEach((p, i) => {
+    restante -= v.valorParcela;
+    const vencDate = parseDate(p.vencimento);
+    const atrasada = !p.pago && vencDate && vencDate < hoje;
+    const rowClass = p.pago ? 'pago' : atrasada ? 'atrasado' : '';
+    const mesNum = vencDate ? vencDate.getMonth() + 1 : '';
+    const mesLabel = meses[mesNum] || '';
+
+    html += `<tr class="${rowClass}">
+      <td>${mesLabel}</td>
+      <td>${p.num}º</td>
+      <td>${p.vencimento}</td>
+      <td>R$ ${v.valorParcela.toFixed(2).replace('.',',')}</td>
+      <td>R$ ${Math.max(0, restante).toFixed(2).replace('.',',')}</td>
+      <td>${p.pago
+        ? `<button class="btn-desfazer" onclick="desfazerPagamento('${v.id}',${i})">Desfazer</button>`
+        : `<button class="btn-pagar" onclick="marcarPago('${v.id}',${i})">Pago</button>`
+      }</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>
+    <button class="btn btn-danger no-print" style="margin-top:12px;" onclick="deleteVenda('${v.id}')">Excluir Venda</button>
+  `;
+
+  document.getElementById('detalheContent').innerHTML = html;
+}
+
+function marcarPago(vendaId, parcelaIdx) {
+  const vendas = getVendas();
+  const v = vendas.find(v => v.id === vendaId);
+  if (v && v.parcelas[parcelaIdx]) {
+    v.parcelas[parcelaIdx].pago = true;
+    v.parcelas[parcelaIdx].dataPagamento = formatDate(new Date());
+    saveVendas(vendas);
+    renderDetalhe(vendaId);
+    showToast('Parcela marcada como paga!');
+  }
+}
+
+function desfazerPagamento(vendaId, parcelaIdx) {
+  const vendas = getVendas();
+  const v = vendas.find(v => v.id === vendaId);
+  if (v && v.parcelas[parcelaIdx]) {
+    v.parcelas[parcelaIdx].pago = false;
+    v.parcelas[parcelaIdx].dataPagamento = null;
+    saveVendas(vendas);
+    renderDetalhe(vendaId);
+    showToast('Pagamento desfeito');
+  }
+}
+
+function ligarCliente(tel) {
+  if (tel) window.location.href = 'tel:' + tel.replace(/\D/g, '');
+}
+
+// ============ PRINT ============
+function gerarCartaoHTML(v, via) {
+  const meses = ['', 'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+
+  // FRENTE
+  let html = `
+    <div class="print-card">
+      <div class="card-via">${via}</div>
+      <div class="card-title">FICHA DE VENDA</div>
+      <table class="print-front-table">
+        <tr>
+          <td class="fl">Emissão:</td>
+          <td class="fv">${v.emissao}</td>
+          <td class="fr">Cobrador:</td>
+          <td class="fv">____________________</td>
+        </tr>
+        <tr>
+          <td class="fl">Nome:</td>
+          <td class="fv" colspan="3">${v.nome}</td>
+        </tr>
+        <tr>
+          <td class="fl">End. Entrega:</td>
+          <td class="fv" colspan="3">${v.endereco}</td>
+        </tr>
+        <tr>
+          <td class="fl">Bairro:</td>
+          <td class="fv">${v.bairro}</td>
+          <td class="fr">Fone:</td>
+          <td class="fv">${v.telefone}</td>
+        </tr>
+        <tr>
+          <td class="fl">Vendedor:</td>
+          <td class="fv">${v.vendedor}</td>
+          <td class="fr">1º Venc.:</td>
+          <td class="fv">${v.vencimento}</td>
+        </tr>
+      </table>
+      <table class="print-prod-table">
+        <tr><th style="width:15%;">Quant.</th><th>Especificação</th></tr>
+        <tr><td style="text-align:center;">01</td><td>${v.mercadoria}</td></tr>
+      </table>
+      <div class="print-footer-row">
+        <span>Con. de Pag: ${v.parcelasStr}</span>
+        <span>Total: R$ ${(v.totalVenda||0).toFixed(2).replace('.',',')}</span>
+      </div>
+      ${v.observacao ? `<div class="print-obs">Obs: ${v.observacao}</div>` : ''}
+    </div>
+  `;
+
+  // VERSO - parcelas
+  let restante = v.totalVenda;
+  html += `
+    <div class="print-card">
+      <div class="card-via">${via}</div>
+      <div class="card-title">CONTROLE DE PARCELAS - ${v.nome}</div>
+      <table class="print-parc-table">
+        <thead>
+          <tr><th style="width:10%;">Mês</th><th style="width:7%;">Nº</th><th style="width:18%;">Vencimento</th><th style="width:15%;">Valor</th><th style="width:17%;">Resto</th><th style="width:18%;">Pago em</th><th style="width:15%;">Cobrador</th></tr>
+        </thead>
+        <tbody>
+  `;
+
+  v.parcelas.forEach((p, i) => {
+    restante -= v.valorParcela;
+    const vencDate = parseDate(p.vencimento);
+    const mesNum = vencDate ? vencDate.getMonth() + 1 : '';
+    const mesLabel = meses[mesNum] || '';
+
+    html += `<tr>
+      <td>${mesLabel}</td>
+      <td>${p.num}º</td>
+      <td>${p.vencimento}</td>
+      <td>R$ ${v.valorParcela.toFixed(2).replace('.',',')}</td>
+      <td>R$ ${Math.max(0, restante).toFixed(2).replace('.',',')}</td>
+      <td>${p.dataPagamento || '____/____/____'}</td>
+      <td></td>
+    </tr>`;
+  });
+
+  // Preencher até 14 linhas
+  for (let i = v.parcelas.length; i < 14; i++) {
+    html += `<tr>
+      <td></td>
+      <td>${i+1}º</td>
+      <td>____/____/____</td>
+      <td></td>
+      <td></td>
+      <td>____/____/____</td>
+      <td></td>
+    </tr>`;
+  }
+
+  html += `</tbody></table></div>`;
+  return html;
+}
+
+function imprimirCartao(id) {
+  const v = getVendaById(id);
+  if (!v) return;
+
+  // 1ª via (cobrador) + 2ª via (cliente)
+  let html = gerarCartaoHTML(v, '1ª VIA - COBRADOR');
+  html += gerarCartaoHTML(v, '2ª VIA - CLIENTE');
+
+  document.getElementById('printArea').innerHTML = html;
+  setTimeout(() => window.print(), 300);
+}
+
+// ============ RELATÓRIOS ============
+function renderRelatorios() {
+  const vendas = getVendas();
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const fimSemana = new Date(hoje);
+  fimSemana.setDate(fimSemana.getDate() + 7);
+
+  // Cobranças da semana
+  const cobrancas = [];
+  vendas.forEach(v => {
+    v.parcelas.forEach(p => {
+      if (p.pago) return;
+      const venc = parseDate(p.vencimento);
+      if (venc && venc >= hoje && venc <= fimSemana) {
+        cobrancas.push({ venda: v, parcela: p, vencDate: venc });
+      }
+    });
+  });
+
+  // Also add overdue
+  const atrasadas = [];
+  vendas.forEach(v => {
+    v.parcelas.forEach(p => {
+      if (p.pago) return;
+      const venc = parseDate(p.vencimento);
+      if (venc && venc < hoje) {
+        atrasadas.push({ venda: v, parcela: p, vencDate: venc });
+      }
+    });
+  });
+
+  cobrancas.sort((a, b) => a.vencDate - b.vencDate);
+  atrasadas.sort((a, b) => a.vencDate - b.vencDate);
+
+  const container = document.getElementById('cobrancasSemana');
+
+  let html = '';
+  if (atrasadas.length > 0) {
+    html += `<h3 style="color:var(--danger);margin-bottom:8px;">Atrasadas (${atrasadas.length})</h3>`;
+    html += atrasadas.map(c => `
+      <div class="client-card atrasado" onclick="showPage('pageDetalhe','${c.venda.id}')">
+        <div class="name">${c.venda.nome}</div>
+        <div class="info">${c.parcela.num}ª parcela - Venceu ${c.parcela.vencimento} - R$ ${c.venda.valorParcela.toFixed(2).replace('.',',')}</div>
+        <div class="info">${c.venda.bairro} - ${c.venda.telefone}</div>
+      </div>
+    `).join('');
+  }
+
+  if (cobrancas.length > 0) {
+    html += `<h3 style="margin:12px 0 8px;">Esta semana (${cobrancas.length})</h3>`;
+    html += cobrancas.map(c => `
+      <div class="client-card" onclick="showPage('pageDetalhe','${c.venda.id}')">
+        <div class="name">${c.venda.nome}</div>
+        <div class="info">${c.parcela.num}ª parcela - Vence ${c.parcela.vencimento} - R$ ${c.venda.valorParcela.toFixed(2).replace('.',',')}</div>
+        <div class="info">${c.venda.bairro} - ${c.venda.telefone}</div>
+      </div>
+    `).join('');
+  }
+
+  if (!html) {
+    html = '<div class="empty-state"><p>Nenhuma cobrança para esta semana</p></div>';
+  }
+
+  container.innerHTML = html;
+
+  // Resumo por vendedor
+  const porVendedor = {};
+  vendas.forEach(v => {
+    const vend = (v.vendedor || 'Sem vendedor').toUpperCase();
+    if (!porVendedor[vend]) porVendedor[vend] = { total: 0, valor: 0, atrasados: 0 };
+    porVendedor[vend].total++;
+    porVendedor[vend].valor += v.totalVenda || 0;
+    if (getVendaStatus(v) === 'atrasado') porVendedor[vend].atrasados++;
+  });
+
+  const vendedorContainer = document.getElementById('resumoVendedor');
+  vendedorContainer.innerHTML = Object.entries(porVendedor).map(([nome, data]) => `
+    <div class="client-card" style="border-left-color:var(--warning);margin-bottom:8px;">
+      <div class="name">${nome}</div>
+      <div class="info-row">
+        <span>${data.total} vendas</span>
+        <span>R$ ${data.valor.toFixed(2).replace('.',',')}</span>
+      </div>
+      ${data.atrasados > 0 ? `<div class="info" style="color:var(--danger);margin-top:4px;">${data.atrasados} cliente(s) atrasado(s)</div>` : ''}
+    </div>
+  `).join('') || '<div class="empty-state"><p>Nenhuma venda registrada</p></div>';
+}
+
+// ============ BACKUP / RESTORE ============
+function exportData() {
+  const vendas = getVendas();
+  if (vendas.length === 0) { showToast('Nenhum dado para exportar'); return; }
+
+  const modal = document.getElementById('modalContent');
+  modal.innerHTML = `
+    <button class="close-modal" onclick="closeModal()">&times;</button>
+    <h2>Backup</h2>
+    <p style="margin-bottom:16px;color:var(--text-light);font-size:14px;">Escolha uma opção:</p>
+    <button class="btn btn-primary" onclick="downloadBackup()">Baixar arquivo de backup</button>
+    <button class="btn btn-outline" onclick="showRestoreUI()">Restaurar backup</button>
+  `;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function downloadBackup() {
+  const data = JSON.stringify(getVendas(), null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'cobrador-backup-' + new Date().toISOString().split('T')[0] + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  closeModal();
+  showToast('Backup baixado!');
+}
+
+function showRestoreUI() {
+  const modal = document.getElementById('modalContent');
+  modal.innerHTML = `
+    <button class="close-modal" onclick="closeModal()">&times;</button>
+    <h2>Restaurar Backup</h2>
+    <p style="margin-bottom:16px;color:var(--text-light);font-size:14px;">Selecione o arquivo de backup:</p>
+    <input type="file" accept=".json" id="restoreFile" style="margin-bottom:16px;">
+    <button class="btn btn-primary" onclick="restoreBackup()">Restaurar</button>
+  `;
+}
+
+function restoreBackup() {
+  const file = document.getElementById('restoreFile').files[0];
+  if (!file) { showToast('Selecione um arquivo'); return; }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (Array.isArray(data)) {
+        if (confirm(`Restaurar ${data.length} vendas? Isso substituirá todos os dados atuais.`)) {
+          saveVendas(data);
+          closeModal();
+          showPage('pageDashboard');
+          showToast('Backup restaurado!');
+        }
+      } else {
+        showToast('Arquivo inválido');
+      }
+    } catch { showToast('Erro ao ler arquivo'); }
+  };
+  reader.readAsText(file);
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+// ============ UTILS ============
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Close modal on overlay click
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// Init
+renderDashboard();
+</script>
+</body>
+</html>
