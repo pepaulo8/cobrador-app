@@ -529,7 +529,13 @@ body {
     <button class="back-btn" id="backBtn" style="display:none;" onclick="goBack()">&#8592;</button>
     <h1 id="headerTitle">Cobrador App</h1>
   </div>
-  <button class="header-btn" id="headerAction" onclick="exportData()">Backup</button>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <a href="emprestimos.html" style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.2);border:none;color:#fff;padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer;text-decoration:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Empréstimos
+    </a>
+    <button class="header-btn" id="headerAction" onclick="exportData()">Backup</button>
+  </div>
 </div>
 
 <!-- Page: Dashboard -->
