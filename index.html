@@ -519,6 +519,53 @@ body {
   padding: 4px 8px;
   margin-right: 8px;
 }
+
+/* Sync indicator */
+#syncIndicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-left: 8px;
+  vertical-align: middle;
+  transition: background 0.3s;
+}
+.sync-ok { background: #4caf50; }
+.sync-ing { background: #ffc107; animation: syncPulse 1s infinite; }
+.sync-err { background: #f44336; }
+.sync-off { background: #9e9e9e; }
+@keyframes syncPulse { 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
+
+/* Setup modal */
+.setup-overlay {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.setup-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  width: 90%;
+  max-width: 360px;
+  text-align: center;
+}
+.setup-card h2 { margin-bottom: 8px; font-size: 20px; }
+.setup-card p { color: var(--text-light); font-size: 14px; margin-bottom: 20px; }
+.setup-card input {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  font-size: 18px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+.setup-card input:focus { outline: none; border-color: var(--primary); }
 </style>
 </head>
 <body>
@@ -527,7 +574,7 @@ body {
 <div class="header" id="mainHeader">
   <div style="display:flex;align-items:center;">
     <button class="back-btn" id="backBtn" style="display:none;" onclick="goBack()">&#8592;</button>
-    <h1 id="headerTitle">Cobrador App</h1>
+    <h1 id="headerTitle">Cobrador App <span id="syncIndicator" class="sync-off"></span></h1>
   </div>
   <div style="display:flex;gap:8px;align-items:center;">
     <a href="emprestimos.html" style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.2);border:none;color:#fff;padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer;text-decoration:none;">
@@ -616,7 +663,114 @@ body {
 <script>
 // ============ DATA LAYER ============
 const STORAGE_KEY = 'cobrador_vendas';
+const SYNC_TIPOS = [{ key: STORAGE_KEY, tipo: 'vendas' }];
 
+// ============ CLOUD SYNC ============
+const SYNC_URL = ''; // ← Cole aqui a URL do Google Apps Script após o deploy
+const USUARIO_KEY = 'cobrador_usuario';
+
+const _syncTimers = {};
+function syncToCloud(tipo, dados) {
+  const usuario = localStorage.getItem(USUARIO_KEY);
+  if (!usuario || !SYNC_URL) return;
+  clearTimeout(_syncTimers[tipo]);
+  _syncTimers[tipo] = setTimeout(() => {
+    updateSyncIndicator('syncing');
+    fetch(SYNC_URL, {
+      method: 'POST',
+      body: JSON.stringify({ usuario, tipo, dados }),
+      mode: 'no-cors'
+    })
+    .then(() => {
+      updateSyncIndicator('synced');
+      localStorage.setItem('cobrador_ultimo_sync', new Date().toISOString());
+    })
+    .catch(() => updateSyncIndicator('error'));
+  }, 2000);
+}
+
+function restoreFromCloud() {
+  const usuario = localStorage.getItem(USUARIO_KEY);
+  if (!usuario || !SYNC_URL) { showToast('Configure seu código de usuário primeiro'); return; }
+  if (!confirm('Restaurar dados da nuvem? Isso substituirá os dados locais.')) return;
+
+  updateSyncIndicator('syncing');
+  let loaded = 0;
+  SYNC_TIPOS.forEach(({ key, tipo }) => {
+    fetch(SYNC_URL + '?usuario=' + encodeURIComponent(usuario) + '&tipo=' + encodeURIComponent(tipo), {
+      redirect: 'follow'
+    })
+    .then(r => r.json())
+    .then(res => {
+      if (res.ok && res.dados !== null) {
+        localStorage.setItem(key, JSON.stringify(res.dados));
+      }
+      loaded++;
+      if (loaded === SYNC_TIPOS.length) {
+        showToast('Dados restaurados da nuvem!');
+        setTimeout(() => location.reload(), 500);
+      }
+    })
+    .catch(() => {
+      loaded++;
+      if (loaded === SYNC_TIPOS.length) {
+        updateSyncIndicator('error');
+        showToast('Erro ao restaurar. Verifique sua conexão.');
+      }
+    });
+  });
+}
+
+function updateSyncIndicator(status) {
+  const el = document.getElementById('syncIndicator');
+  if (!el) return;
+  el.className = status === 'synced' ? 'sync-ok'
+    : status === 'syncing' ? 'sync-ing'
+    : status === 'error' ? 'sync-err'
+    : 'sync-off';
+}
+
+function checkUsuario() {
+  if (localStorage.getItem(USUARIO_KEY)) {
+    updateSyncIndicator(SYNC_URL ? 'synced' : 'off');
+    return;
+  }
+  const div = document.createElement('div');
+  div.className = 'setup-overlay';
+  div.id = 'setupOverlay';
+  div.innerHTML = `
+    <div class="setup-card">
+      <h2>Bem-vindo!</h2>
+      <p>Digite um código para identificar seus dados. Exemplo: seu nome ou apelido.</p>
+      <input type="text" id="setupCodigo" placeholder="ex: jose" autofocus>
+      <button class="btn btn-primary" onclick="salvarUsuario()">Começar</button>
+    </div>
+  `;
+  document.body.appendChild(div);
+  setTimeout(() => document.getElementById('setupCodigo').focus(), 100);
+}
+
+function salvarUsuario() {
+  const input = document.getElementById('setupCodigo');
+  const codigo = input.value.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+  if (!codigo) { input.style.borderColor = '#d32f2f'; return; }
+  localStorage.setItem(USUARIO_KEY, codigo);
+  document.getElementById('setupOverlay').remove();
+  updateSyncIndicator(SYNC_URL ? 'synced' : 'off');
+  SYNC_TIPOS.forEach(({ key, tipo }) => {
+    const data = localStorage.getItem(key);
+    if (data) syncToCloud(tipo, JSON.parse(data));
+  });
+}
+
+window.addEventListener('online', () => {
+  SYNC_TIPOS.forEach(({ key, tipo }) => {
+    const data = localStorage.getItem(key);
+    if (data) syncToCloud(tipo, JSON.parse(data));
+  });
+});
+
+// ============ DATA LAYER ============
 function getVendas() {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
@@ -625,6 +779,7 @@ function getVendas() {
 
 function saveVendas(vendas) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(vendas));
+  syncToCloud('vendas', vendas);
 }
 
 function getVendaById(id) {
@@ -1320,7 +1475,8 @@ function exportData() {
     <h2>Backup</h2>
     <p style="margin-bottom:16px;color:var(--text-light);font-size:14px;">Escolha uma opção:</p>
     <button class="btn btn-primary" onclick="downloadBackup()">Baixar arquivo de backup</button>
-    <button class="btn btn-outline" onclick="showRestoreUI()">Restaurar backup</button>
+    <button class="btn btn-outline" onclick="showRestoreUI()">Restaurar de arquivo</button>
+    <button class="btn btn-outline" style="border-color:var(--success);color:var(--success);" onclick="closeModal();restoreFromCloud();">Restaurar da nuvem</button>
   `;
   document.getElementById('modalOverlay').classList.add('show');
 }
@@ -1390,6 +1546,7 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
 });
 
 // Init
+checkUsuario();
 renderDashboard();
 </script>
 </body>
